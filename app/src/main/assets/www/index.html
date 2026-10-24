@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Vistoria Arbórea</title>
+<style>
+/* Layout: uma coluna para uso em campo, barra superior fixa, ações grandes para o polegar */
+:root{
+  --bg:#f3f5f4; --surface:#ffffff; --ink:#15211c; --muted:#5b6b64; --line:#d5ddd9;
+  --brand:#1f4e79; --brand-ink:#ffffff; --leaf:#2e6b4f; --soft:#e6eef5;
+  --low:#d9eed8; --mod:#fff0c2; --high:#f7c7a8; --ext:#d9534f; --ext-ink:#fff;
+  --r:10px;
+  --f:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0f1513; --surface:#18211e; --ink:#e7eeeb; --muted:#9aaba4; --line:#2c3a35;
+  --brand:#6fa3d4; --brand-ink:#0b1622; --leaf:#7fc3a0; --soft:#1d2b36;
+  --low:#21402b; --mod:#4a4018; --high:#5a3220; --ext:#c94541; --ext-ink:#fff; color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 var(--f)}
+body{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+button,input,select,textarea{font:inherit;color:inherit}
+header{position:sticky;top:0;z-index:5;background:var(--brand);color:var(--brand-ink);
+  padding:calc(10px + env(safe-area-inset-top,0px)) 12px 10px;display:flex;align-items:center;gap:8px}
+header h1{font-size:17px;margin:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header .sub{font-size:12px;opacity:.85;font-weight:400;display:block}
+.iconbtn{background:transparent;border:0;color:inherit;width:40px;height:40px;border-radius:50%;font-size:22px;line-height:1}
+.iconbtn:active{background:rgba(255,255,255,.15)}
+main{padding:12px 12px 24px;max-width:760px;margin:0 auto}
+.tabs{display:flex;gap:4px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:calc(60px + env(safe-area-inset-top,0px));z-index:4;overflow-x:auto}
+.tabs button{flex:1;border:0;background:none;padding:12px 6px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap}
+.tabs button[aria-selected=true]{color:var(--brand);border-bottom-color:var(--brand)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;margin-bottom:10px}
+.card h2{font-size:15px;margin:0 0 8px;color:var(--brand);text-transform:uppercase;letter-spacing:.04em}
+.listitem{display:flex;gap:10px;align-items:center;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;margin-bottom:8px}
+.listitem .t{font-weight:600}
+.listitem .m{color:var(--muted);font-size:13px}
+.listitem .grow{flex:1;min-width:0}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:4px}
+.row{display:flex;gap:6px;align-items:flex-start}
+.row>.grow{flex:1;min-width:0}
+input[type=text],input[type=date],select,textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px}
+textarea{min-height:76px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);outline-offset:0}
+.mic{flex:none;width:46px;height:46px;border-radius:50%;border:0;background:var(--leaf);color:#fff;font-size:20px}
+.mic.on{animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.5}}
+@media (prefers-reduced-motion:reduce){.mic.on{animation:none;outline:3px solid var(--ext)}}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{border:1px solid var(--line);background:var(--soft);border-radius:999px;padding:6px 10px;font-size:13px;text-align:left}
+.chip:active{background:var(--brand);color:var(--brand-ink)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.btn{border:0;border-radius:8px;padding:12px 14px;font-weight:600;background:var(--brand);color:var(--brand-ink)}
+.btn.sec{background:var(--soft);color:var(--ink);border:1px solid var(--line)}
+.btn.danger{background:transparent;color:var(--ext);border:1px solid var(--ext)}
+.btn.block{width:100%}
+.fab{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:6;border-radius:999px;padding:14px 20px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:6px}
+.ph{position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:var(--bg)}
+.ph img{display:block;width:100%;aspect-ratio:1;object-fit:cover}
+.ph input{border:0;border-top:1px solid var(--line);border-radius:0;padding:6px;font-size:12px}
+.ph .x{position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff}
+.addph{display:flex;gap:6px;margin-top:6px}
+.addph .btn{flex:1;padding:10px;font-size:14px}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
+.r-Baixo{background:var(--low)} .r-Moderado{background:var(--mod)} .r-Alto{background:var(--high)} .r-Extremo{background:var(--ext);color:var(--ext-ink)}
+.riskline{border:1px dashed var(--line);border-radius:8px;padding:10px;margin-bottom:8px}
+.hint{font-size:12px;color:var(--muted)}
+details.sec{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);margin-bottom:10px}
+details.sec>summary{list-style:none;padding:14px 12px;font-weight:700;display:flex;align-items:center;gap:8px}
+details.sec>summary::-webkit-details-marker{display:none}
+details.sec>summary::after{content:"▾";margin-left:auto;color:var(--muted)}
+details.sec[open]>summary::after{content:"▴"}
+details.sec>.in{padding:0 12px 12px}
+.badge{font-size:11px;color:var(--muted);font-weight:500}
+.done{color:var(--leaf)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;z-index:20;max-width:90vw;font-size:14px}
+.empty{text-align:center;color:var(--muted);padding:40px 16px}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.calc{font-size:13px;margin-top:6px}
+.dap{font-size:13px;color:var(--muted);margin-top:4px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="jszip.min.js"></script>
+<script src="docx.js"></script>
+<script>
+"use strict";
+/* ============ PONTE NATIVA (Android) com simulação para navegador ============ */
+const NATIVE = typeof window.Android !== "undefined";
+const mockPhotos = {};
+const Bridge = NATIVE ? window.Android : {
+  loadDb(){ try{return localStorage.getItem("vistoria_db")||""}catch(e){return ""} },
+  saveDb(j){ try{localStorage.setItem("vistoria_db",j);return true}catch(e){return false} },
+  photoBase(){ return "" },
+  readPhoto(n){ return (mockPhotos[n]||"").split(",")[1]||"" },
+  deletePhoto(n){ delete mockPhotos[n] },
+  startSpeech(id){ setTimeout(()=>window.__speechError(id,"Ditado por voz disponível apenas no app Android."),50) },
+  takePhoto(id){ pickFile(id) }, pickPhoto(id){ pickFile(id) },
+  saveExport(name,b64,mime){ const a=document.createElement("a"); a.href="data:"+mime+";base64,"+b64; a.download=name; document.body.appendChild(a); a.click(); a.remove(); window.__lastExport={name,b64}; return "mock://"+name },
+  share(){}, openFile(){}
+};
+function pickFile(id){
+  const i=document.createElement("input"); i.type="file"; i.accept="image/*";
+  i.onchange=()=>{ const f=i.files[0]; if(!f) return; const r=new FileReader();
+    r.onload=()=>{ const img=new Image(); img.onload=()=>{ const s=Math.min(1,1600/Math.max(img.width,img.height));
+      const c=document.createElement("canvas"); c.width=Math.round(img.width*s); c.height=Math.round(img.height*s);
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height); const name="p"+Date.now()+".jpg";
+      mockPhotos[name]=c.toDataURL("image/jpeg",.85); window.__photo(id,name)}; img.src=r.result }; r.readAsDataURL(f) };
+  i.click();
+}
+function photoSrc(name){ return NATIVE ? Bridge.photoBase()+name : (mockPhotos[name]||"") }
+
+/* ============ DADOS ============ */
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+let DB={vistorias:[]};
+try{ const raw=Bridge.loadDb(); if(raw) DB=JSON.parse(raw) }catch(e){}
+if(!DB.vistorias) DB={vistorias:[]};
+if(!DB.perfil) DB.perfil={equipe:"",responsavel:"",assinatura:""};
+let saveTimer=null;
+function save(now){ clearTimeout(saveTimer); const run=()=>{ const ok=Bridge.saveDb(JSON.stringify(DB)); if(!ok) toast("Não foi possível salvar. Verifique o espaço do aparelho.") }; if(now) run(); else saveTimer=setTimeout(run,500) }
+function touch(v){ v.atualizado=new Date().toISOString(); save() }
+const hoje=()=>new Date().toISOString().slice(0,10);
+
+const OBJETIVO_PADRAO="Avaliação fitossanitária e de risco de queda de indivíduo(s) arbóreo(s), visando subsidiar tecnicamente a decisão de manejo e a instrução do respectivo requerimento perante o órgão ambiental competente.";
+function novaVistoria(){
+  return {id:uid(),criado:new Date().toISOString(),atualizado:new Date().toISOString(),
+    solicitante:"",documento:"",endereco:"",municipio:"",uf:"PR",cep:"",data:hoje(),
+    equipe:DB.perfil.equipe||"",responsavel:DB.perfil.responsavel||"",art:"",objetivo:OBJETIVO_PADRAO,
+    caracterizacao:"",parecer:"",arvores:[]};
+}
+function novaArvore(v){
+  const n=v.arvores.length+1; const ant=v.arvores[v.arvores.length-1]||{};
+  return {id:uid(),num:n,especie:ant.especie||"",popular:ant.popular||"",origem:ant.origem||"Nativa",ameacada:ant.ameacada||"Não",
+    cap:"",altura:"",lat:"",lon:"",copa:"",tronco:"",raizes:"",entorno:"",alvos:"",probAtingir:"",consequencias:"",
+    riscos:[{id:uid(),parte:"Árvore inteira",alvo:"",pf:"",pi:"",cons:""}],classificacaoTxt:"",alternativas:"",recomendacao:"",
+    estadoGeral:"",recResumo:"",fotos:[]};
+}
+
+/* ============ METODOLOGIA ISA ============ */
+const PF=["Improvável","Possível","Provável","Iminente"];
+const PI=["Muito baixa","Baixa","Média","Alta"];
+const CONS=["Insignificante","Menor","Significativa","Severa"];
+const M1=[ /* linhas = PF (improvável..iminente), colunas = PI (muito baixa..alta) */
+ ["Improvável","Improvável","Improvável","Improvável"],
+ ["Improvável","Improvável","Improvável","Pouco provável"],
+ ["Improvável","Improvável","Pouco provável","Provável"],
+ ["Improvável","Pouco provável","Provável","Muito provável"]];
+const M1L=["Improvável","Pouco provável","Provável","Muito provável"];
+const M2={ "Muito provável":["Baixo","Moderado","Alto","Extremo"], "Provável":["Baixo","Moderado","Alto","Alto"],
+  "Pouco provável":["Baixo","Baixo","Moderado","Moderado"], "Improvável":["Baixo","Baixo","Baixo","Baixo"] };
+const RISK_ORDER=["Baixo","Moderado","Alto","Extremo"];
+function calcLinha(l){
+  const a=PF.indexOf(l.pf), b=PI.indexOf(l.pi), c=CONS.indexOf(l.cons);
+  if(a<0||b<0) return {comb:null,risco:null};
+  const comb=M1[a][b]; if(c<0) return {comb,risco:null};
+  return {comb,risco:M2[comb][c]};
+}
+function calcArvore(t){
+  let best=null, iminente=false;
+  for(const l of t.riscos||[]){ const r=calcLinha(l); if(l.pf==="Iminente") iminente=true;
+    if(r.risco && (best===null || RISK_ORDER.indexOf(r.risco)>RISK_ORDER.indexOf(best))) best=r.risco; }
+  return {risco:best, iminente};
+}
+function riscoResumo(t){ const c=calcArvore(t); if(!c.risco) return ""; return c.risco+(c.iminente&&c.risco==="Extremo"?" / iminente":""); }
+function riscoTexto(t){
+  if((t.classificacaoTxt||"").trim()) return t.classificacaoTxt.trim();
+  const c=calcArvore(t); if(!c.risco) return "";
+  return c.risco==="Extremo"&&c.iminente ? "Risco extremo ou iminente." : "Risco "+c.risco.toLowerCase()+".";
+}
+const dap=cap=>{ const n=parseFloat(String(cap).replace(",",".")); return isFinite(n)&&n>0 ? (n/Math.PI) : null };
+const fmt1=n=>n==null?"":n.toFixed(1).replace(".",",");
+
+/* ============ FRASES RÁPIDAS (da ficha de campo / laudo modelo) ============ */
+const CHIPS={
+  copa:["Copa com vigor normal","Vigor reduzido","Ausência de copa","100% dos galhos quebrados","Galhos mortos em parte da copa","Galhos pendurados ou soltos","Copa desequilibrada","Clorose / necrose foliar","Indivíduo sem capacidade funcional aparente"],
+  tronco:["Presença de corpos de frutificação fúngicos na base e ao longo do tronco, indicando processo de apodrecimento","Perfurações visíveis, provavelmente associadas à ação de insetos xilófagos","Som oco à percussão, indicativo de perda de lenho interno","Som maciço à percussão","Cavidade / oco aberto","Rachaduras ou fissuras","Desprendimento visível de lenho","Desprendimento intenso de casca","Inclinação acentuada não corrigida","Dano mecânico no tronco","Sem defeitos aparentes no tronco"],
+  raizes:["Raízes não visíveis superficialmente","Base envolvida por concreto, com área muito reduzida para infiltração de água e trocas gasosas no solo","Base parcialmente envolvida por concreto","Base completamente envolvida por concreto, sem área de infiltração","Raízes cortadas ou danificadas","Levantamento ou rachadura do piso","Corpos de frutificação fúngicos no colo","Sem alterações aparentes na base e raízes"],
+  entorno:["Indivíduo localizado a menos de 1 m de estrutura de alvenaria","Presença de trânsito frequente de pessoas a menos de 2 m do tronco","Presença de edificações no entorno","Proximidade da rede elétrica","Proximidade de via pública ou calçada","Área de estacionamento de veículos"],
+  alvos:["Pessoas","Telhado","Estruturas de alvenaria","Veículos","Rede elétrica","Via pública","Demais elementos construídos no entorno imediato"],
+  probAtingir:["Muito baixa","Baixa","Média","Alta","Muito alta"],
+  consequencias:["As consequências potenciais da falha são severas, envolvendo danos estruturais a construções e risco direto à vida.","As consequências potenciais da falha são significativas, com possibilidade de danos a estruturas e lesões a pessoas.","As consequências potenciais da falha são menores, restritas a danos de pequena monta.","As consequências potenciais da falha são insignificantes."],
+  alternativas:["Não há alternativa de manejo conservativo tecnicamente recomendada para este indivíduo, considerando que a árvore se encontra morta, com sinais de apodrecimento e perda estrutural interna.","Poda de limpeza com remoção de galhos mortos","Poda de redução de copa","Monitoramento periódico","Restrição de acesso à área de queda"],
+  recomendacao:["Supressão do indivíduo arbóreo.","Isolar a área até o manejo por equipe habilitada e o protocolo junto ao órgão ambiental competente.","Manutenção do indivíduo com monitoramento periódico.","Poda de limpeza e remoção de galhos mortos."],
+  estadoGeral:["Morta, sem copa, com sinais de apodrecimento e cavidades internas","Viva, com vigor reduzido","Viva, em bom estado fitossanitário","Em declínio"],
+  recResumo:["Supressão e isolamento imediato da área","Supressão","Poda","Manutenção com monitoramento"],
+  caracterizacao:["Segundo relatos dos moradores, já ocorreram quedas de galhos provenientes dessas árvores, com danos ao telhado das edificações próximas.","Há circulação recorrente de pessoas na área.","Os indivíduos avaliados encontram-se no entorno imediato das edificações existentes no terreno."],
+};
+const FOTO_SECOES=[["copa","Copa"],["tronco","Tronco"],["raizes","Raízes / infiltração"],["entorno","Área de entorno"]];
+
+/* ============ ROTEAMENTO ============ */
+let route={view:"home"}; // home | vistoria(id,tab) | arvore(id,aid)
+const findV=id=>DB.vistorias.find(v=>v.id===id);
+function go(r){ route=r; render(); window.scrollTo(0,0) }
+window.__back=function(){
+  if(route.view==="arvore"){ go({view:"vistoria",id:route.id,tab:"arvores"}); return true }
+  if(route.view==="vistoria"||route.view==="perfil"){ go({view:"home"}); return true }
+  return false;
+};
+
+/* ============ UTILIDADES DE UI ============ */
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let toastT; function toast(msg){ let t=document.querySelector(".toast"); if(!t){t=document.createElement("div");t.className="toast";t.setAttribute("role","status");document.body.appendChild(t)} t.textContent=msg; clearTimeout(toastT); toastT=setTimeout(()=>t.remove(),3200) }
+let fieldCtx={}; // id do campo -> {obj, key, onChange}
+function bindObj(obj,key,onChange){ const id="f_"+uid(); fieldCtx[id]={obj,key,onChange}; return id }
+function textField(label,obj,key,opts={}){
+  const id=bindObj(obj,key,opts.onChange); const chips=opts.chips||CHIPS[key];
+  const area = opts.single
+    ? `<input type="text" id="${id}" data-bind value="${esc(obj[key])}" ${opts.ph?`placeholder="${esc(opts.ph)}"`:""}>`
+    : `<textarea id="${id}" data-bind ${opts.ph?`placeholder="${esc(opts.ph)}"`:""}>${esc(obj[key])}</textarea>`;
+  return `<div class="field"><label for="${id}">${esc(label)}</label>
+   <div class="row"><div class="grow">${area}</div>${opts.nomic?"":`<button class="mic" data-mic="${id}" aria-label="Ditar ${esc(label)}">🎤</button>`}</div>
+   ${chips&&!opts.nochips?`<div class="chips">${chips.map(c=>`<button class="chip" data-chip="${id}" data-mode="${opts.chipMode||"append"}">${esc(c)}</button>`).join("")}</div>`:""}
+   ${opts.hint?`<div class="hint">${esc(opts.hint)}</div>`:""}</div>`;
+}
+function inputField(label,obj,key,type="text",opts={}){
+  const id=bindObj(obj,key,opts.onChange);
+  return `<div class="field"><label for="${id}">${esc(label)}</label><input type="${type==="number"?"text":type}" id="${id}" data-bind value="${esc(obj[key])}" ${type==="number"?'inputmode="decimal"':""} ${opts.ph?`placeholder="${esc(opts.ph)}"`:""}>${opts.after||""}</div>`;
+}
+function selectField(label,obj,key,options,opts={}){
+  const id=bindObj(obj,key,opts.onChange);
+  return `<div class="field"><label for="${id}">${esc(label)}</label><select id="${id}" data-bind><option value="">—</option>${options.map(o=>`<option ${obj[key]===o?"selected":""}>${esc(o)}</option>`).join("")}</select></div>`;
+}
+function appendText(cur,add,mode){
+  if(mode==="replace") return add;
+  cur=(cur||"").trim(); if(!cur) return add;
+  if(/[.;:]$/.test(cur)) return cur+" "+add;
+  return cur+"; "+add.charAt(0).toLowerCase()+add.slice(1);
+}
+function setField(id,val){ const c=fieldCtx[id]; if(!c) return; c.obj[c.key]=val; const el=document.getElementById(id); if(el){ el.value=val; grow(el) } afterChange(c) }
+function afterChange(c){ const v=currentV(); if(v) touch(v); else save(); if(c&&c.onChange) c.onChange() }
+const currentV=()=>route.id?findV(route.id):null;
+
+/* ============ TELAS ============ */
+function render(){
+  fieldCtx={};
+  const app=document.getElementById("app");
+  if(route.view==="home") app.innerHTML=viewHome();
+  else if(route.view==="perfil") app.innerHTML=viewPerfil();
+  else if(route.view==="vistoria"){ const v=currentV(); if(!v) return go({view:"home"}); app.innerHTML=viewVistoria(v) }
+  else if(route.view==="arvore"){ const v=currentV(); const t=v&&v.arvores.find(a=>a.id===route.aid); if(!t) return go({view:"home"}); app.innerHTML=viewArvore(v,t) }
+  requestAnimationFrame(()=>document.querySelectorAll("textarea").forEach(grow));
+  document.querySelectorAll("details.sec").forEach(d=>d.addEventListener("toggle",()=>d.querySelectorAll("textarea").forEach(grow)));
+}
+function header(title,sub,back){
+  return `<header>${back?`<button class="iconbtn" data-act="back" aria-label="Voltar">←</button>`:""}<h1>${esc(title)}${sub?`<span class="sub">${esc(sub)}</span>`:""}</h1>${route.view==="home"?`<button class="iconbtn" data-act="perfil" aria-label="Equipe padrão">⚙</button>`:""}</header>`;
+}
+function viewHome(){
+  const list=[...DB.vistorias].sort((a,b)=>b.atualizado.localeCompare(a.atualizado));
+  return header("Vistoria Arbórea","Avaliação fitossanitária e de risco") + `<main>
+  ${list.length?list.map(v=>`<button class="listitem" data-act="openV" data-id="${v.id}"><div class="grow"><div class="t">${esc(v.endereco||"Vistoria sem endereço")}</div>
+   <div class="m">${esc(v.municipio||"")}${v.municipio?" · ":""}${fmtData(v.data)} · ${v.arvores.length} árvore(s)${v.solicitante?" · "+esc(v.solicitante):""}</div></div><span aria-hidden="true">›</span></button>`).join("")
+   :`<div class="empty"><p><b>Nenhuma vistoria ainda.</b></p><p>Toque em “Nova vistoria” para começar. Tudo fica salvo no aparelho, sem precisar de internet.</p></div>`}
+  </main><button class="btn fab" data-act="newV">+ Nova vistoria</button>`;
+}
+function viewPerfil(){
+  return header("Equipe padrão","Preenchida automaticamente em novas vistorias",true)+`<main><div class="card">
+  ${textField("Equipe técnica (uma pessoa por linha)",DB.perfil,"equipe",{nochips:true,ph:"Nome / formação, registro"})}
+  ${textField("Responsável técnico (assinatura do laudo)",DB.perfil,"responsavel",{nochips:true,ph:"Nome\nRegistro profissional"})}
+  </div></main>`;
+}
+function fmtData(d){ if(!d) return ""; const [y,m,dd]=d.split("-"); return `${dd}/${m}/${y}` }
+function viewVistoria(v){
+  const tab=route.tab||"geral";
+  const tabs=[["geral","Dados gerais"],["arvores",`Árvores (${v.arvores.length})`],["laudo","Laudo"],["exportar","Exportar"]];
+  let body="";
+  if(tab==="geral") body=`<div class="card"><h2>Identificação</h2>
+    ${textField("Solicitante",v,"solicitante",{single:true})}
+    ${textField("CPF / RG / CNPJ do solicitante",v,"documento",{single:true,nomic:true})}
+    ${textField("Endereço da vistoria",v,"endereco",{single:true,ph:"Rua, nº"})}
+    <div class="grid3"><div style="grid-column:span 2">${textField("Município",v,"municipio",{single:true})}</div>${inputField("UF",v,"uf")}</div>
+    <div class="grid2">${inputField("CEP",v,"cep")}${inputField("Data da vistoria",v,"data","date")}</div>
+    ${textField("Equipe técnica (uma pessoa por linha)",v,"equipe",{nochips:true,ph:"Nome / formação, registro"})}
+    ${textField("Responsável técnico",v,"responsavel",{nochips:true,ph:"Nome\nRegistro profissional"})}
+    ${inputField("Nº ART / RRT",v,"art")}
+    ${textField("Objetivo",v,"objetivo",{nochips:true})}
+   </div>
+   <div class="card"><h2>Caracterização da área</h2>${textField("Uso do local, circulação de pessoas, histórico de quedas e danos",v,"caracterizacao")}</div>
+   <div class="card"><h2>Excluir</h2>${confirmBlock("delV","Excluir esta vistoria","Excluir definitivamente, com fotos")}</div>`;
+  else if(tab==="arvores") body=(v.arvores.length?v.arvores.map(t=>{ const r=riscoResumo(t); const rk=calcArvore(t).risco;
+     return `<button class="listitem" data-act="openT" data-aid="${t.id}"><div class="grow"><div class="t">Árvore ${t.num} · <i>${esc(t.especie||"espécie não informada")}</i></div>
+     <div class="m">CAP ${esc(t.cap||"–")} cm · DAP ${fmt1(dap(t.cap))||"–"} cm · ${esc(t.altura||"–")} m · ${t.fotos.length} foto(s)</div></div>${rk?`<span class="pill r-${rk}">${esc(r)}</span>`:""}</button>`}).join("")
+     :`<div class="empty"><p><b>Nenhuma árvore cadastrada.</b></p><p>Toque em “Nova árvore” para avaliar o primeiro indivíduo.</p></div>`)+`<button class="btn fab" data-act="newT">+ Nova árvore</button>`;
+  else if(tab==="laudo") body=`<div class="card"><h2>Parecer conclusivo</h2>${textField("Texto do parecer (vai para a seção 8 do laudo)",v,"parecer",{nochips:true})}
+     <button class="btn sec block" data-act="sugParecer">Gerar sugestão a partir das árvores</button><div class="hint" style="margin-top:6px">A sugestão substitui o texto atual. Revise antes de exportar.</div></div>
+     <div class="card"><h2>O que entra no laudo</h2><div class="hint">1. Identificação e objetivo · 2. Base legal, normativa e metodológica (NBR 16246-3:2025, ISA, Lei 15.299/2025 e Portaria MMA 148/2022 quando houver espécie ameaçada) · 3. Metodologia · 4. Critérios de classificação · 5. Caracterização da área · 6. Quadro-resumo · 7. Avaliação individual · 8. Parecer conclusivo · Assinatura · Anexo I – Registro fotográfico.</div></div>`;
+  else body=`<div class="card"><h2>Exportar</h2><p class="hint">Os arquivos vão para a pasta <b>Download/Vistoria Arvores</b> do aparelho.</p>
+     <button class="btn block" data-act="expDocx" style="margin-bottom:8px">Laudo técnico (.docx)</button>
+     <button class="btn block" data-act="expXlsx" style="margin-bottom:8px">Planilha de dados (.xlsx)</button>
+     <div id="expOut"></div></div>
+     <div class="card"><h2>Pendências</h2>${pendencias(v)}</div>`;
+  return header(v.endereco||"Nova vistoria",[v.municipio,fmtData(v.data)].filter(Boolean).join(" · "),true)+
+   `<nav class="tabs" role="tablist">${tabs.map(([k,l])=>`<button role="tab" aria-selected="${k===tab}" data-act="tab" data-tab="${k}">${l}</button>`).join("")}</nav><main>${body}</main>`;
+}
+function pendencias(v){
+  const p=[]; if(!v.solicitante) p.push("Solicitante"); if(!v.endereco) p.push("Endereço"); if(!v.responsavel) p.push("Responsável técnico"); if(!v.art) p.push("Nº ART");
+  if(!v.arvores.length) p.push("Nenhuma árvore cadastrada");
+  v.arvores.forEach(t=>{ const f=[]; if(!t.especie) f.push("espécie"); if(!t.cap) f.push("CAP"); if(!t.altura) f.push("altura"); if(!calcArvore(t).risco&&!t.classificacaoTxt) f.push("classificação de risco"); if(!t.recomendacao) f.push("recomendação"); if(!t.fotos.length) f.push("fotos"); if(f.length) p.push(`Árvore ${t.num}: ${f.join(", ")}`) });
+  if(!v.parecer) p.push("Parecer conclusivo");
+  return p.length?`<ul style="margin:0;padding-left:18px">${p.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:`<p class="done"><b>Tudo preenchido.</b></p>`;
+}
+function confirmBlock(act,label,confirmLabel){
+  return `<div class="confirm" data-confirm><button class="btn danger" data-act="askConfirm">${esc(label)}</button><span hidden data-c><button class="btn danger" data-act="${act}">${esc(confirmLabel)}</button> <button class="btn sec" data-act="cancelConfirm">Cancelar</button></span></div>`;
+}
+function photoBlock(t,secao){
+  const fs=t.fotos.filter(f=>f.secao===secao);
+  return `<div class="photos">${fs.map(f=>{ const id=bindObj(f,"legenda"); return `<div class="ph"><img src="${esc(photoSrc(f.nome))}" alt="${esc(f.legenda)}"><button class="x" data-act="delPh" data-ph="${f.id}" aria-label="Remover foto">✕</button><input type="text" id="${id}" data-bind value="${esc(f.legenda)}" aria-label="Legenda"></div>`}).join("")}</div>
+   <div class="addph"><button class="btn sec" data-act="cam" data-sec="${secao}">📷 Câmera</button><button class="btn sec" data-act="gal" data-sec="${secao}">🖼 Galeria</button></div>`;
+}
+function viewArvore(v,t){
+  const dapEl=`<div class="dap" id="dapOut">DAP: ${fmt1(dap(t.cap))||"–"} cm</div>`;
+  const recalc=()=>{ const o=document.getElementById("dapOut"); if(o) o.textContent="DAP: "+(fmt1(dap(t.cap))||"–")+" cm" };
+  const sec=(key,title,inner,open)=>`<details class="sec" ${open?"open":""} data-sec="${key}"><summary>${title}</summary><div class="in">${inner}</div></details>`;
+  const riskHtml=(t.riscos||[]).map((l,i)=>{ const r=calcLinha(l); return `<div class="riskline" data-line="${l.id}">
+     <div class="grid2">${textField("Parte que pode falhar",l,"parte",{single:true,nochips:true,nomic:true})}${textField("Alvo",l,"alvo",{single:true,nochips:true,nomic:true})}</div>
+     <div class="grid3">${selectField("Prob. de falha",l,"pf",PF,{onChange:updRisk})}${selectField("Prob. de impacto",l,"pi",PI,{onChange:updRisk})}${selectField("Consequência",l,"cons",CONS,{onChange:updRisk})}</div>
+     <div class="calc" data-calc="${l.id}">${calcHtml(r)}</div>
+     ${t.riscos.length>1?`<button class="btn sec" style="margin-top:6px" data-act="delRisk" data-line="${l.id}">Remover linha</button>`:""}</div>`}).join("");
+  return header(`Árvore ${t.num}`,t.especie||v.endereco,true)+`<main>
+   ${sec("id","Identificação e dendrometria",`
+     ${textField("Espécie (nome científico)",t,"especie",{single:true,nochips:true,onChange:()=>{}})}
+     ${textField("Nome popular",t,"popular",{single:true,nochips:true})}
+     <div class="grid2">${selectField("Origem",t,"origem",["Nativa","Exótica"])}${selectField("Ameaçada (MMA 148/2022)",t,"ameacada",["Não","VU – Vulnerável","EN – Em Perigo","CR – Criticamente em Perigo"])}</div>
+     <div class="grid2">${inputField("CAP a 1,30 m (cm)",t,"cap","number",{onChange:recalc,after:dapEl})}${inputField("Altura estimada (m)",t,"altura","number")}</div>
+     <div class="grid2">${inputField("Latitude",t,"lat")}${inputField("Longitude",t,"lon")}</div>`,true)}
+   ${sec("copa","Estado da copa",textField("Estado da copa",t,"copa")+photoBlock(t,"copa"))}
+   ${sec("tronco","Condição do tronco",textField("Condição do tronco (inclua o resultado da percussão)",t,"tronco")+photoBlock(t,"tronco"))}
+   ${sec("raizes","Condição das raízes",textField("Base, colo e raízes",t,"raizes")+photoBlock(t,"raizes"))}
+   ${sec("entorno","Área no entorno e alvos",textField("Área no entorno",t,"entorno")+photoBlock(t,"entorno")+textField("Alvos potenciais",t,"alvos"))}
+   ${sec("risco","Avaliação de risco (ISA)",`<div class="hint" style="margin-bottom:8px">Uma linha para cada parte que pode falhar × alvo. A classificação geral é a maior entre as linhas.</div>
+     <div id="riskLines">${riskHtml}</div><button class="btn sec block" data-act="addRisk">+ Linha de risco</button>
+     <div class="card" style="margin-top:10px">Classificação calculada: <span id="riskTotal">${riskTotalHtml(t)}</span></div>
+     ${textField("Probabilidade de atingir um alvo",t,"probAtingir",{single:true,chipMode:"replace"})}
+     ${textField("Consequências potenciais da falha e severidade",t,"consequencias",{chipMode:"replace"})}
+     ${textField("Classificação do risco (texto do laudo)",t,"classificacaoTxt",{single:true,nochips:true,ph:"Deixe vazio para usar o cálculo",hint:"Vazio = usa a classificação calculada."})}`)}
+   ${sec("manejo","Manejo e recomendação",textField("Alternativas de manejo",t,"alternativas")+textField("Recomendação técnica",t,"recomendacao"))}
+   ${sec("resumo","Resumo para o quadro do laudo",textField("Estado geral (curto)",t,"estadoGeral",{chipMode:"replace"})+textField("Recomendação (curta)",t,"recResumo",{single:true,chipMode:"replace"}))}
+   ${sec("outras","Outras fotos",photoBlock(t,"geral"))}
+   <div class="card">${confirmBlock("delT","Excluir árvore","Excluir árvore e fotos")}</div>
+  </main>`;
+}
+function calcHtml(r){ return r.comb?`Falha × impacto: <b>${r.comb}</b>${r.risco?` → Risco <span class="pill r-${r.risco}">${r.risco}</span>`:" · escolha a consequência"}`:`<span class="hint">Escolha a probabilidade de falha e de impacto.</span>` }
+function riskTotalHtml(t){ const c=calcArvore(t); return c.risco?`<span class="pill r-${c.risco}">${esc(riscoResumo(t))}</span>`:"<span class='hint'>incompleta</span>" }
+function updRisk(){ const v=currentV(); const t=v&&v.arvores.find(a=>a.id===route.aid); if(!t) return;
+  t.riscos.forEach(l=>{ const el=document.querySelector(`[data-calc="${l.id}"]`); if(el) el.innerHTML=calcHtml(calcLinha(l)) });
+  const tt=document.getElementById("riskTotal"); if(tt) tt.innerHTML=riskTotalHtml(t) }
+
+/* ============ EVENTOS ============ */
+function grow(el){ if(el&&el.tagName==="TEXTAREA"){ el.style.height="auto"; el.style.height=Math.max(76,el.scrollHeight+2)+"px" } }
+document.addEventListener("input",e=>{ grow(e.target); const id=e.target.id; const c=fieldCtx[id]; if(!c||!e.target.hasAttribute("data-bind")) return; c.obj[c.key]=e.target.value; afterChange(c) });
+document.addEventListener("change",e=>{ const id=e.target.id; const c=fieldCtx[id]; if(!c||e.target.tagName!=="SELECT") return; c.obj[c.key]=e.target.value; afterChange(c) });
+let speechTarget=null;
+window.__speech=function(reqId,text){ document.querySelectorAll(".mic.on").forEach(m=>m.classList.remove("on")); const c=fieldCtx[reqId]; if(!c||!text) return;
+  const el=document.getElementById(reqId); const single=el&&el.tagName==="INPUT";
+  let cur=(c.obj[c.key]||"").trim(); text=text.trim(); if(!single||cur) text=text.charAt(0).toUpperCase()+text.slice(1);
+  const nv=cur?(cur+(/[.;:,]$/.test(cur)?" ":". ")+text):text; setField(reqId,nv) };
+window.__speechError=function(reqId,msg){ document.querySelectorAll(".mic.on").forEach(m=>m.classList.remove("on")); if(msg) toast(msg) };
+let photoReq=null;
+window.__photo=function(reqId,name){ if(!photoReq||photoReq.id!==reqId) return; const {v,t,secao}=photoReq; photoReq=null;
+  const n=t.fotos.filter(f=>f.secao===secao).length+1; const nomeSec=(FOTO_SECOES.find(s=>s[0]===secao)||[0,"Registro"])[1];
+  t.fotos.push({id:uid(),nome:name,secao,legenda:nomeSec+(n>1?" "+n:"")}); touch(v); save(true);
+  const openSecs=[...document.querySelectorAll("details.sec[open]")].map(d=>d.dataset.sec); const y=window.scrollY; render();
+  openSecs.forEach(s=>{ const d=document.querySelector(`details.sec[data-sec="${s}"]`); if(d) d.open=true }); window.scrollTo(0,y); toast("Foto adicionada") };
+window.__photoError=function(reqId,msg){ photoReq=null; if(msg) toast(msg) };
+
+document.addEventListener("click",e=>{
+  const chip=e.target.closest("[data-chip]"); if(chip){ const id=chip.dataset.chip; const c=fieldCtx[id]; if(c) setField(id,appendText(c.obj[c.key],chip.textContent,chip.dataset.mode)); return }
+  const mic=e.target.closest("[data-mic]"); if(mic){ mic.classList.add("on"); try{ Bridge.startSpeech(mic.dataset.mic) }catch(err){ mic.classList.remove("on"); toast("Ditado indisponível neste aparelho.") } return }
+  const b=e.target.closest("[data-act]"); if(!b) return; const act=b.dataset.act; const v=currentV();
+  const t=v&&route.aid?v.arvores.find(a=>a.id===route.aid):null;
+  switch(act){
+    case "back": window.__back(); break;
+    case "perfil": go({view:"perfil"}); break;
+    case "newV": { const nv=novaVistoria(); DB.vistorias.push(nv); save(true); go({view:"vistoria",id:nv.id,tab:"geral"}); break }
+    case "openV": go({view:"vistoria",id:b.dataset.id,tab:"geral"}); break;
+    case "tab": go({view:"vistoria",id:route.id,tab:b.dataset.tab}); break;
+    case "newT": { const nt=novaArvore(v); v.arvores.push(nt); touch(v); save(true); go({view:"arvore",id:v.id,aid:nt.id}); break }
+    case "openT": go({view:"arvore",id:v.id,aid:b.dataset.aid}); break;
+    case "askConfirm": { const w=b.closest("[data-confirm]"); b.hidden=true; w.querySelector("[data-c]").hidden=false; break }
+    case "cancelConfirm": { const w=b.closest("[data-confirm]"); w.querySelector("[data-c]").hidden=true; w.querySelector("[data-act=askConfirm]").hidden=false; break }
+    case "delV": { v.arvores.forEach(a=>a.fotos.forEach(f=>{try{Bridge.deletePhoto(f.nome)}catch(_){}})); DB.vistorias=DB.vistorias.filter(x=>x.id!==v.id); save(true); go({view:"home"}); toast("Vistoria excluída"); break }
+    case "delT": { t.fotos.forEach(f=>{try{Bridge.deletePhoto(f.nome)}catch(_){}}); v.arvores=v.arvores.filter(a=>a.id!==t.id); v.arvores.forEach((a,i)=>a.num=i+1); touch(v); save(true); go({view:"vistoria",id:v.id,tab:"arvores"}); break }
+    case "cam": case "gal": { const rid="ph_"+uid(); photoReq={id:rid,v,t,secao:b.dataset.sec}; try{ act==="cam"?Bridge.takePhoto(rid):Bridge.pickPhoto(rid) }catch(err){ photoReq=null; toast("Não foi possível abrir a câmera.") } break }
+    case "delPh": { const f=t.fotos.find(x=>x.id===b.dataset.ph); if(f){ try{Bridge.deletePhoto(f.nome)}catch(_){} t.fotos=t.fotos.filter(x=>x!==f); touch(v); b.closest(".ph").remove(); toast("Foto removida") } break }
+    case "addRisk": { t.riscos.push({id:uid(),parte:"",alvo:"",pf:"",pi:"",cons:""}); touch(v); const y=window.scrollY; render(); const d=document.querySelector('details.sec[data-sec="risco"]'); if(d) d.open=true; window.scrollTo(0,y); break }
+    case "delRisk": { t.riscos=t.riscos.filter(l=>l.id!==b.dataset.line); touch(v); const y=window.scrollY; render(); const d=document.querySelector('details.sec[data-sec="risco"]'); if(d) d.open=true; window.scrollTo(0,y); break }
+    case "sugParecer": { v.parecer=sugestaoParecer(v); touch(v); render(); toast("Sugestão inserida. Revise o texto."); break }
+    case "expDocx": exportar(v,"docx",b); break;
+    case "expXlsx": exportar(v,"xlsx",b); break;
+    case "share": try{ Bridge.share(b.dataset.uri,b.dataset.mime) }catch(_){} break;
+    case "openFile": try{ Bridge.openFile(b.dataset.uri,b.dataset.mime) }catch(_){} break;
+  }
+});
+
+/* ============ TEXTOS DO LAUDO ============ */
+function listaPt(a){ a=a.filter(Boolean); if(a.length<=1) return a.join(""); return a.slice(0,-1).join(", ")+" e "+a[a.length-1] }
+function especies(v){ return [...new Set(v.arvores.map(t=>(t.especie||"").trim()).filter(Boolean))] }
+function sugestaoParecer(v){
+  const n=v.arvores.length; const esp=especies(v);
+  const sup=v.arvores.filter(t=>/supress/i.test(t.recomendacao+" "+t.recResumo)).length;
+  const maxR=v.arvores.map(t=>calcArvore(t).risco).filter(Boolean).sort((a,b)=>RISK_ORDER.indexOf(b)-RISK_ORDER.indexOf(a))[0];
+  let s=`Com base no levantamento fitossanitário e na avaliação realizada em campo, conclui-se que ${n===1?"o indivíduo avaliado":`os ${n} indivíduos avaliados`}${esp.length?` de ${listaPt(esp)}`:""} ${n===1?"apresenta":"apresentam"} as condições descritas na Seção 7, com classificação de risco ${maxR?("até "+maxR.toLowerCase()):"a definir"}.`;
+  if(sup) s+=`\n\nConsiderando a proximidade com alvos, a circulação de pessoas e a possibilidade de danos à vida e ao patrimônio, recomenda-se a supressão de ${sup===n?(n===1?"o indivíduo":"todos os indivíduos"):`${sup} indivíduo(s)`}, com isolamento da área até a execução do manejo por equipe habilitada.`;
+  const am=v.arvores.filter(t=>t.ameacada&&t.ameacada!=="Não");
+  if(am.length) s+=`\n\nRessalta-se que ${listaPt([...new Set(am.map(t=>t.especie))])} ${am.length>1?"constam":"consta"} na Lista Nacional Oficial de Espécies da Flora Brasileira Ameaçadas de Extinção (Portaria MMA nº 148/2022). Dessa forma, a supressão deverá ser previamente submetida à apreciação do órgão ambiental competente, com a observância dos procedimentos, autorizações e demais exigências legais aplicáveis.`;
+  return s;
+}
+const TXT={
+  objetivo2:"A avaliação considerou os elementos visíveis da copa, tronco, base, raízes aparentes e entorno imediato, bem como a presença de alvos potenciais, como pessoas, edificações e estruturas construídas.",
+  base:"Para a elaboração deste laudo, foram consideradas as seguintes referências:",
+  nbr:"ABNT NBR 16246-3:2025 — Florestas urbanas — Manejo de árvores, arbustos e outras plantas lenhosas — Parte 3: Avaliação de risco de árvores, adotada como referência normativa para a inspeção dos indivíduos arbóreos, a identificação de defeitos e condições que possam comprometer sua estabilidade e a análise da exposição de pessoas, edificações e outros alvos potenciais.",
+  isa:"International Society of Arboriculture (ISA) — Basic Tree Risk Assessment Form e respectivas instruções de uso, adotados como referência complementar para a categorização qualitativa do risco. A metodologia considera a combinação entre a probabilidade de falha da árvore ou de uma de suas partes, a probabilidade de impacto em alvos e a severidade das consequências esperadas.",
+  lei:"Lei Federal nº 15.299, de 22 de dezembro de 2025, que altera a Lei nº 9.605/1998 para tratar da poda ou do corte de árvores em razão da possibilidade de ocorrência de acidente. A norma prevê que o requerimento para permissão de poda ou corte seja instruído com laudo emitido por empresa ou profissional habilitado, sem prejuízo da observância das demais exigências ambientais aplicáveis.",
+  met1:n=>`A avaliação foi realizada por meio de inspeção visual externa individualizada ${n===1?"do indivíduo arbóreo":`dos ${n} indivíduos arbóreos`}, considerando as condições observáveis nas partes acessíveis e visíveis das árvores e em seu entorno imediato. A inspeção foi complementada por auscultação do tronco por percussão, com a finalidade de identificar alterações na resposta sonora potencialmente associadas à perda de lenho interno.`,
+  met2:"A inspeção contemplou:",
+  metItens:["condição geral da copa ou, quando aplicável, ausência de copa, presença de galhos mortos ou quebrados e sinais de perda de vitalidade;","condição do tronco, incluindo cavidades, perfurações, sinais de apodrecimento, corpos de frutificação fúngicos, rachaduras, desprendimento de casca ou lenho e resposta sonora à percussão;","condição da base do tronco, do colo e das raízes aparentes, considerando sinais de deterioração, danos mecânicos e alterações visíveis no entorno;","presença e exposição de alvos potenciais, incluindo pessoas, edificações, telhados, muros, veículos e demais estruturas situadas na área passível de impacto;","histórico relatado de queda de galhos e de danos às edificações existentes no entorno;","combinação entre a probabilidade de falha estrutural, a probabilidade de impacto em alvos e a severidade das consequências esperadas."],
+  met3:"A ABNT NBR 16246-3:2025 foi adotada como referência normativa para a estruturação da avaliação. Para a categorização qualitativa do risco, descrita a seguir, foi utilizada como referência complementar a metodologia da International Society of Arboriculture (ISA).",
+  crit1:"A classificação qualitativa do risco foi definida com base na metodologia da International Society of Arboriculture (ISA), considerando três componentes principais:",
+  critComp:[["Probabilidade de falha",", classificada como improvável, possível, provável ou iminente;"],["Probabilidade de impacto em alvos",", classificada como muito baixa, baixa, média ou alta;"],["Severidade das consequências",", classificada como insignificante, menor, significativa ou severa."]],
+  crit2:"A combinação desses componentes permite o enquadramento do risco nas seguintes classes finais:",
+  classes:[["Baixo",": a combinação entre probabilidade de falha, probabilidade de impacto e consequências potenciais resulta em risco reduzido;"],["Moderado",": a combinação dos fatores indica risco intermediário, podendo justificar monitoramento e adoção de medidas preventivas;"],["Alto",": a combinação dos fatores evidencia risco relevante e necessidade prioritária de manejo;"],["Extremo",": a combinação dos fatores indica risco crítico, especialmente quando há elevada probabilidade conjunta de falha e impacto, associada a consequências severas, demandando intervenção urgente."]],
+  crit3:"A classificação geral de cada indivíduo corresponde à maior classe de risco identificada entre as falhas estruturais avaliadas e os respectivos alvos sujeitos a impacto.",
+  quadro:"O quadro a seguir apresenta uma síntese da avaliação dos indivíduos arbóreos. O detalhamento das condições observadas em cada árvore é apresentado na Seção 7, enquanto as fotografias que evidenciam os aspectos registrados em campo encontram-se reunidas no Anexo I.",
+};
+function objetivoTexto(v){
+  const n=v.arvores.length; const esp=especies(v); const loc=[v.endereco,v.municipio&&("município de "+v.municipio),v.uf&&ufNome(v.uf)].filter(Boolean).join(", ");
+  return `O presente laudo técnico tem por finalidade registrar o estado fitossanitário e estrutural de ${n} ${n===1?"indivíduo":"indivíduos"}${esp.length?(esp.length===1?" da espécie ":" das espécies ")+"\u0000"+esp.join("\u0001")+"\u0000":" arbóreos"} ${n===1?"localizado":"localizados"} em terreno situado na ${loc||"[endereço]"}, visando subsidiar tecnicamente a tomada de decisão quanto à necessidade de manejo, especialmente diante de risco de queda e possibilidade de acidente.`;
+}
+function ufNome(uf){ const m={PR:"Paraná",SC:"Santa Catarina",RS:"Rio Grande do Sul",SP:"São Paulo",MG:"Minas Gerais",RJ:"Rio de Janeiro",MS:"Mato Grosso do Sul",GO:"Goiás",DF:"Distrito Federal",ES:"Espírito Santo",BA:"Bahia",MT:"Mato Grosso"}; return m[(uf||"").toUpperCase()]||uf }
+function dataExtenso(d){ if(!d) return ""; const M=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"]; const [y,m,dd]=d.split("-"); return `${parseInt(dd,10)} de ${M[parseInt(m,10)-1]} de ${y}` }
+
+/* ============ GERAÇÃO DO DOCX ============ */
+function b64ToBytes(b){ const s=atob(b); const a=new Uint8Array(s.length); for(let i=0;i<s.length;i++) a[i]=s.charCodeAt(i); return a }
+function jpegSize(bytes){ let i=2; while(i<bytes.length){ if(bytes[i]!==0xFF){i++;continue} const m=bytes[i+1]; const len=(bytes[i+2]<<8)+bytes[i+3];
+  if(m>=0xC0&&m<=0xCF&&m!==0xC4&&m!==0xC8&&m!==0xCC) return {h:(bytes[i+5]<<8)+bytes[i+6],w:(bytes[i+7]<<8)+bytes[i+8]}; i+=2+len } return {w:4,h:3} }
+async function gerarDocx(v){
+  const D=window.docx; const {Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,WidthType,AlignmentType,ShadingType,ImageRun,HeadingLevel,BorderStyle,VerticalAlign,PageBreak,LevelFormat,TableLayoutType}=D;
+  const FONT="Times New Roman", BLUE="1F4E79", SHADE="DCE6F1";
+  const W=9026; // largura útil A4 (2,5 + 2 cm) em dxa ≈ 15,92 cm
+  const r=(t,o={})=>new TextRun({text:t,font:FONT,size:o.size||24,bold:o.bold,italics:o.italics,color:o.color});
+  // texto com nomes científicos em itálico: trechos entre \u0000 ... \u0000 (separados por \u0001)
+  const runsSci=(text,o={})=>{ const out=[]; const parts=String(text).split("\u0000"); parts.forEach((p,i)=>{ if(i%2===1){ const sp=p.split("\u0001"); sp.forEach((s,j)=>{ out.push(r(s,{...o,italics:true})); if(j<sp.length-1) out.push(r(j===sp.length-2?" e ":", ",o)) }) } else if(p) out.push(...italicSpecies(p,o)) }); return out };
+  const spp=especies(v).filter(s=>s.split(" ").length>=2).sort((a,b)=>b.length-a.length);
+  const italicSpecies=(text,o)=>{ if(!spp.length) return [r(text,o)]; const re=new RegExp("("+spp.map(s=>s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|")+")","g"); return text.split(re).filter(x=>x!=="").map(x=>spp.includes(x)?r(x,{...o,italics:true}):r(x,o)) };
+  const P=(text,o={})=>new Paragraph({alignment:o.align||AlignmentType.JUSTIFIED,spacing:{after:o.after??120,line:o.line||300,before:o.before||0},indent:o.indent,keepNext:o.keepNext,children:Array.isArray(text)?text:runsSci(text,o)});
+  const paras=(text,o)=>String(text||"").split(/\n+/).filter(s=>s.trim()).map(s=>P(s.trim(),o));
+  const H1=t=>new Paragraph({heading:HeadingLevel.HEADING_1,spacing:{before:240,after:120},keepNext:true,children:[r(t,{bold:true,size:24})]});
+  const H2=t=>new Paragraph({heading:HeadingLevel.HEADING_2,spacing:{before:180,after:100},keepNext:true,children:[r(t,{bold:true,size:24})]});
+  const bullet=(children)=>new Paragraph({numbering:{reference:"bul",level:0},alignment:AlignmentType.JUSTIFIED,spacing:{after:80,line:300},children});
+  const border={style:BorderStyle.SINGLE,size:4,color:"808080"}; const borders={top:border,bottom:border,left:border,right:border};
+  const cell=(content,w,o={})=>new TableCell({width:{size:w,type:WidthType.DXA},borders,verticalAlign:VerticalAlign.CENTER,shading:o.fill?{fill:o.fill,type:ShadingType.CLEAR,color:"auto"}:undefined,margins:{top:60,bottom:60,left:100,right:100},
+    children:(Array.isArray(content)?content:[content]).map(c=>c instanceof Paragraph?c:new Paragraph({alignment:o.align||AlignmentType.LEFT,children:Array.isArray(c)?c:runsSci(String(c??""),{size:o.size||22,bold:o.bold,color:o.color})}))});
+  const kvTable=(rows,lw)=>new Table({width:{size:W,type:WidthType.DXA},columnWidths:[lw,W-lw],layout:TableLayoutType.FIXED,rows:rows.map(([k,val])=>new TableRow({cantSplit:true,children:[cell(k,lw,{bold:true,fill:SHADE}),cell(val,W-lw)]}))});
+  const multi=(text,size=22)=>String(text||"").split(/\n/).map(s=>new Paragraph({children:runsSci(s,{size})}));
+
+  const n=v.arvores.length; const ameacadas=v.arvores.filter(t=>t.ameacada&&t.ameacada!=="Não");
+  // numeração de figuras na ordem do anexo
+  let fig=0; const figs=[]; const ordemSec=["copa","tronco","raizes","entorno","geral"];
+  v.arvores.forEach(t=>ordemSec.forEach(s=>t.fotos.filter(f=>f.secao===s).forEach(f=>{ fig++; figs.push({n:fig,t,f}) })));
+  const refs=(t,secs)=>{ const ns=figs.filter(x=>x.t===t&&secs.includes(x.f.secao)).map(x=>x.n); if(!ns.length) return ""; return " ("+(ns.length===1?"Figura ":"Figuras ")+listaPt(ns.map(String))+")" };
+  const comRef=(txt,ref)=>{ txt=(txt||"").trim(); if(!ref) return txt; if(/[.;]$/.test(txt)) return txt.slice(0,-1)+ref+txt.slice(-1); return txt+ref };
+
+  const ch=[];
+  ch.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:60},children:[r("LAUDO TÉCNICO DE ESTADO FITOSSANITÁRIO",{bold:true,size:30,color:BLUE})]}));
+  ch.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:200},children:[r("E AVALIAÇÃO DE RISCO DE QUEDA DE ÁRVORES",{bold:true,size:30,color:BLUE})]}));
+  ch.push(new Paragraph({alignment:AlignmentType.CENTER,children:[r([v.municipio,v.uf].filter(Boolean).join("/"))]}));
+  ch.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:240},children:[r(dataExtenso(hoje()))]}));
+  ch.push(kvTable([
+    ["Solicitante",multi([v.solicitante,v.documento].filter(Boolean).join("\n"))],
+    ["Endereço da vistoria",[v.endereco,[v.municipio,ufNome(v.uf)].filter(Boolean).join(", "),v.cep].filter(Boolean).join(", ")],
+    ["Data da vistoria",fmtData(v.data)],
+    ["Equipe Técnica",multi(v.equipe)],
+    ["Responsável técnico",multi(v.responsavel)],
+    ["Nº ART",v.art||""],
+    ["Objetivo",v.objetivo||""],
+  ],2600));
+  ch.push(H1("1. Identificação e objetivo")); ch.push(P(runsSci(objetivoTexto(v)))); ch.push(P(TXT.objetivo2));
+  ch.push(H1("2. Base legal, normativa e metodológica")); ch.push(P(TXT.base));
+  ch.push(H2("2.1 Referência normativa para avaliação de risco")); ch.push(bullet(runsSci(TXT.nbr)));
+  ch.push(H2("2.2 Referência metodológica complementar")); ch.push(bullet(runsSci(TXT.isa)));
+  ch.push(H2("2.3 Referências legais aplicáveis")); ch.push(bullet(runsSci(TXT.lei)));
+  if(ameacadas.length){ const sp=[...new Set(ameacadas.map(t=>t.especie+"|"+t.ameacada))].map(x=>x.split("|"));
+    ch.push(bullet([r("Portaria MMA nº 148, de 7 de junho de 2022, que altera o Anexo da Portaria MMA nº 443, de 17 de dezembro de 2014, referente à Lista Oficial de Espécies da Flora Brasileira Ameaçadas de Extinção. Nessa lista, "),
+      ...sp.flatMap(([e,c],i)=>[r(e,{italics:true}),r(` encontra-se classificada na categoria ${c.split(" – ")[1]} (${c.split(" – ")[0]})`),r(i<sp.length-1?"; ":".")])])) }
+  ch.push(H1("3. Metodologia de avaliação")); ch.push(P(TXT.met1(n))); ch.push(P(TXT.met2)); TXT.metItens.forEach(i=>ch.push(bullet([r(i)]))); ch.push(P(TXT.met3,{before:80}));
+  ch.push(H1("4. Critérios de classificação de risco")); ch.push(P(TXT.crit1)); TXT.critComp.forEach(([a,b])=>ch.push(bullet([r(a,{bold:true}),r(b)]))); ch.push(P(TXT.crit2,{before:80}));
+  TXT.classes.forEach(([a,b])=>ch.push(bullet([r(a,{bold:true}),r(b)]))); ch.push(P(TXT.crit3,{before:80}));
+  ch.push(H1("5. Caracterização geral da área")); paras(v.caracterizacao||"[Descrever o uso do local, a circulação de pessoas e o histórico relatado.]").forEach(p=>ch.push(p));
+  ch.push(H1("6. Quadro-resumo dos indivíduos avaliados")); ch.push(P(TXT.quadro));
+  const qw=[450,1550,650,650,800,1950,1150,1826];
+  const qh=["ID","Espécie","CAP (cm)","DAP (cm)","Altura (m)","Estado geral","Risco","Recomendação"];
+  ch.push(new Table({width:{size:W,type:WidthType.DXA},columnWidths:qw,layout:TableLayoutType.FIXED,rows:[
+    new TableRow({tableHeader:true,cantSplit:true,children:qh.map((h,i)=>cell(h,qw[i],{bold:true,fill:BLUE,color:"FFFFFF",align:AlignmentType.CENTER,size:20}))}),
+    ...v.arvores.map(t=>new TableRow({cantSplit:true,children:[
+      cell(String(t.num),qw[0],{align:AlignmentType.CENTER,size:20}), cell([new Paragraph({children:[r(t.especie||"",{italics:true,size:20})]})],qw[1]),
+      cell(String(t.cap||"").replace(".",","),qw[2],{align:AlignmentType.CENTER,size:20}), cell(fmt1(dap(t.cap)),qw[3],{align:AlignmentType.CENTER,size:20}),
+      cell(String(t.altura||"").replace(".",","),qw[4],{align:AlignmentType.CENTER,size:20}), cell(t.estadoGeral||"",qw[5],{size:20}),
+      cell(riscoResumo(t)||t.classificacaoTxt||"",qw[6],{align:AlignmentType.CENTER,size:20}), cell(t.recResumo||"",qw[7],{size:20})]}))]}));
+  ch.push(H1("7. Avaliação individual"));
+  v.arvores.forEach((t,i)=>{
+    ch.push(H2(`7.${i+1}. Árvore ${t.num}`));
+    const espTxt=[new Paragraph({children:[r(t.especie||"",{italics:true,size:22}),r(t.popular?` (${t.popular})`:"",{size:22})]})];
+    ch.push(kvTable([
+      ["Identificação",`Árvore ${t.num}`],["Espécie",espTxt],["CAP",t.cap?String(t.cap).replace(".",",")+" cm":""],["DAP",dap(t.cap)?fmt1(dap(t.cap))+" cm":""],
+      ["Altura estimada",t.altura?String(t.altura).replace(".",",")+" m":""],
+      ...(t.lat&&t.lon?[["Coordenadas",`${t.lat}, ${t.lon}`]]:[]),
+      ["Estado da copa",comRef(t.copa,refs(t,["copa"]))],["Condição do tronco",comRef(t.tronco,refs(t,["tronco"]))],
+      ["Condição das raízes",comRef(t.raizes,refs(t,["raizes"]))],["Área no entorno",comRef(t.entorno,refs(t,["entorno"]))],
+      ["Alvos potenciais",t.alvos||""],["Probabilidade de atingir um alvo",t.probAtingir||""],
+      ["Consequências potenciais da falha e severidade",t.consequencias||""],["Classificação do risco",riscoTexto(t)],
+      ["Alternativas de manejo",t.alternativas||""],["Recomendação técnica",t.recomendacao||""],
+    ],2600));
+    const linhas=(t.riscos||[]).filter(l=>l.pf||l.pi||l.cons);
+    if(linhas.length){
+      ch.push(P([r("Matriz de risco (ISA) – partes avaliadas:",{size:20,italics:true})],{before:120,after:60,keepNext:true}));
+      const rw=[1900,1600,1300,1250,1300,1676]; const rh=["Parte","Alvo","Prob. de falha","Prob. de impacto","Consequência","Risco"];
+      ch.push(new Table({width:{size:W,type:WidthType.DXA},columnWidths:rw,layout:TableLayoutType.FIXED,rows:[
+        new TableRow({cantSplit:true,children:rh.map((h,k)=>cell(h,rw[k],{bold:true,fill:SHADE,size:18,align:AlignmentType.CENTER}))}),
+        ...linhas.map(l=>new TableRow({cantSplit:true,children:[l.parte,l.alvo,l.pf,l.pi,l.cons,calcLinha(l).risco||""].map((x,k)=>cell(x||"",rw[k],{size:18,align:k>1?AlignmentType.CENTER:AlignmentType.LEFT}))}))]}));
+    }
+  });
+  ch.push(H1("8. Parecer conclusivo")); paras(v.parecer||"[Parecer conclusivo]").forEach(p=>ch.push(p));
+  ch.push(P(`${v.municipio||""}${v.uf?", "+v.uf:""}, ${dataExtenso(hoje())}.`,{align:AlignmentType.LEFT,before:240,after:480}));
+  ch.push(new Paragraph({alignment:AlignmentType.CENTER,children:[r("______________________________________________")]}));
+  String(v.responsavel||"").split(/\n/).filter(Boolean).forEach(l=>ch.push(new Paragraph({alignment:AlignmentType.CENTER,children:[r(l)]})));
+  if(figs.length){
+    ch.push(new Paragraph({children:[new PageBreak()]})); ch.push(H1("Anexo I - Registro fotográfico"));
+    const cw=W/2; const rows=[];
+    for(let i=0;i<figs.length;i+=2){
+      const pair=figs.slice(i,i+2);
+      const imgCells=pair.map(x=>{ let data; try{ data=b64ToBytes(Bridge.readPhoto(x.f.nome)) }catch(e){ data=null }
+        if(!data||!data.length) return cell("[foto indisponível]",cw,{align:AlignmentType.CENTER});
+        const s=jpegSize(data); const maxW=272, maxH=272; let w=maxW, h=Math.round(maxW*s.h/s.w); if(h>maxH){ h=maxH; w=Math.round(maxH*s.w/s.h) }
+        return new TableCell({width:{size:cw,type:WidthType.DXA},borders,margins:{top:80,bottom:40,left:80,right:80},children:[
+          new Paragraph({alignment:AlignmentType.CENTER,children:[new ImageRun({type:"jpg",data,transformation:{width:w,height:h}})]}),
+          new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:60},children:[r(`Figura ${x.n}: Árvore ${x.t.num} - ${x.f.legenda||""}`,{size:20})]})]}) });
+      while(imgCells.length<2) imgCells.push(cell("",cw));
+      rows.push(new TableRow({cantSplit:true,children:imgCells}));
+    }
+    ch.push(new Table({width:{size:W,type:WidthType.DXA},columnWidths:[cw,cw],layout:TableLayoutType.FIXED,rows}));
+  }
+  const doc=new Document({
+    creator:"Vistoria Arbórea", title:"Laudo técnico de estado fitossanitário",
+    styles:{default:{document:{run:{font:FONT,size:24}}},
+      paragraphStyles:[{id:"Heading1",name:"Heading 1",basedOn:"Normal",next:"Normal",quickFormat:true,run:{font:FONT,size:24,bold:true,color:"000000"},paragraph:{spacing:{before:240,after:120},outlineLevel:0}},
+        {id:"Heading2",name:"Heading 2",basedOn:"Normal",next:"Normal",quickFormat:true,run:{font:FONT,size:24,bold:true,color:"000000"},paragraph:{spacing:{before:180,after:100},outlineLevel:1}}]},
+    numbering:{config:[{reference:"bul",levels:[{level:0,format:LevelFormat.BULLET,text:"•",alignment:AlignmentType.LEFT,style:{paragraph:{indent:{left:720,hanging:360}}}}]}]},
+    sections:[{properties:{page:{size:{width:11906,height:16838},margin:{top:1418,bottom:1134,left:1418,right:1134}}},children:ch}]});
+  return await Packer.toBase64String(doc);
+}
+
+/* ============ GERAÇÃO DO XLSX (sem dependências além do JSZip) ============ */
+function colName(i){ let s=""; i++; while(i>0){ const m=(i-1)%26; s=String.fromCharCode(65+m)+s; i=Math.floor((i-1)/26) } return s }
+const xe=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,"");
+function sheetXml(rows){
+  const widths=rows[0].map((_,c)=>Math.min(60,Math.max(8,...rows.map(r=>String(r[c]??"").split("\n")[0].length+2))));
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>${widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join("")}</cols><sheetData>${
+   rows.map((r,ri)=>`<row r="${ri+1}">${r.map((v,ci)=>{ const ref=colName(ci)+(ri+1); const st=ri===0?' s="1"':' s="2"';
+     if(typeof v==="number"&&isFinite(v)) return `<c r="${ref}"${st}><v>${v}</v></c>`;
+     return `<c r="${ref}" t="inlineStr"${st}><is><t xml:space="preserve">${xe(v)}</t></is></c>` }).join("")}</row>`).join("")}</sheetData></worksheet>`;
+}
+async function gerarXlsx(v){
+  const num=x=>{ const n=parseFloat(String(x).replace(",",".")); return isFinite(n)?n:(x||"") };
+  const sheets=[
+   ["Vistoria",[["Campo","Valor"],["Solicitante",v.solicitante],["Documento",v.documento],["Endereço",v.endereco],["Município",v.municipio],["UF",v.uf],["CEP",v.cep],["Data da vistoria",fmtData(v.data)],["Equipe técnica",v.equipe],["Responsável técnico",v.responsavel],["Nº ART",v.art],["Objetivo",v.objetivo],["Caracterização da área",v.caracterizacao],["Parecer conclusivo",v.parecer],["Nº de árvores",v.arvores.length]]],
+   ["Árvores",[["ID","Espécie","Nome popular","Origem","Ameaçada","CAP (cm)","DAP (cm)","Altura (m)","Latitude","Longitude","Estado da copa","Condição do tronco","Condição das raízes","Área no entorno","Alvos potenciais","Prob. de atingir alvo","Consequências","Risco calculado","Classificação (laudo)","Alternativas de manejo","Recomendação técnica","Estado geral (resumo)","Recomendação (resumo)","Nº de fotos"],
+     ...v.arvores.map(t=>[t.num,t.especie,t.popular,t.origem,t.ameacada,num(t.cap),dap(t.cap)?Math.round(dap(t.cap)*10)/10:"",num(t.altura),t.lat,t.lon,t.copa,t.tronco,t.raizes,t.entorno,t.alvos,t.probAtingir,t.consequencias,riscoResumo(t),riscoTexto(t),t.alternativas,t.recomendacao,t.estadoGeral,t.recResumo,t.fotos.length])]],
+   ["Matriz de risco",[["Árvore","Parte","Alvo","Prob. de falha","Prob. de impacto","Falha × impacto","Consequência","Risco"],
+     ...v.arvores.flatMap(t=>(t.riscos||[]).map(l=>{ const c=calcLinha(l); return [t.num,l.parte,l.alvo,l.pf,l.pi,c.comb||"",l.cons,c.risco||""] }))]],
+   ["Fotos",[["Árvore","Seção","Legenda","Arquivo"],...v.arvores.flatMap(t=>t.fotos.map(f=>[t.num,(FOTO_SECOES.find(s=>s[0]===f.secao)||[0,"Outras"])[1],f.legenda,f.nome]))]],
+  ];
+  const z=new JSZip();
+  z.file("[Content_Types].xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${sheets.map((_,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("")}</Types>`);
+  z.file("_rels/.rels",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`);
+  z.file("xl/workbook.xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${sheets.map((s,i)=>`<sheet name="${xe(s[0])}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join("")}</sheets></workbook>`);
+  z.file("xl/_rels/workbook.xml.rels",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${sheets.map((_,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join("")}<Relationship Id="rId${sheets.length+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`);
+  z.file("xl/styles.xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF1F4E79"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"><alignment vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`);
+  sheets.forEach((s,i)=>z.file(`xl/worksheets/sheet${i+1}.xml`,sheetXml(s[1])));
+  return await z.generateAsync({type:"base64",compression:"DEFLATE"});
+}
+
+/* ============ EXPORTAÇÃO ============ */
+function nomeArquivo(v,ext){ const base=(v.endereco||"vistoria").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^\w]+/g,"_").replace(/^_|_$/g,"").slice(0,40); return `${ext==="docx"?"Laudo":"Dados"}_${base}_${v.data||hoje()}.${ext}` }
+async function exportar(v,ext,btn){
+  const out=document.getElementById("expOut"); const label=btn.textContent; btn.disabled=true; btn.textContent="Gerando…";
+  try{
+    save(true);
+    const b64=ext==="docx"?await gerarDocx(v):await gerarXlsx(v);
+    const mime=ext==="docx"?"application/vnd.openxmlformats-officedocument.wordprocessingml.document":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    const name=nomeArquivo(v,ext); const uri=Bridge.saveExport(name,b64,mime);
+    if(!uri||String(uri).startsWith("ERR")) throw new Error(String(uri||"").replace(/^ERR:?/,"")||"falha ao gravar");
+    out.innerHTML=`<div class="card" style="margin-top:8px"><b>Salvo:</b> Download/Vistoria Arvores/${esc(name)}<div class="addph"><button class="btn sec" data-act="openFile" data-uri="${esc(uri)}" data-mime="${mime}">Abrir</button><button class="btn sec" data-act="share" data-uri="${esc(uri)}" data-mime="${mime}">Compartilhar</button></div></div>`;
+    toast("Arquivo salvo em Download/Vistoria Arvores");
+  }catch(err){ console.error(err); toast("Não foi possível exportar: "+(err&&err.message||err)) }
+  finally{ btn.disabled=false; btn.textContent=label }
+}
+window.__test={gerarDocx,gerarXlsx,DB:()=>DB,mockPhotos,calcLinha};
+render();
+</script>
+</body>
+</html>
